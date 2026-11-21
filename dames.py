@@ -371,8 +371,8 @@ class Coup:
     prise: bool = False
 
     def __str__(self) -> str:
-        """Notation des dames : "1. c3-d4" pour un déplacement, "4. d4xf6" pour une prise."""
-        raise NotImplementedError("à compléter")
+        separateur = "x" if self.prise else "-"
+        return f"{self.numero}. {self.depart}{separateur}{self.arrivee}"
 
 
 class Partie:
@@ -380,17 +380,42 @@ class Partie:
 
     def __init__(self, plateau: "Plateau | None" = None):
         self.plateau = plateau if plateau is not None else Plateau.position_initiale()
-        self.trait = "blanc"                  # la couleur qui doit jouer
+        self.trait = "blanc"
         self.historique: list[Coup] = []
 
     def jouer(self, depart: str, arrivee: str) -> Coup:
-        """Vérifie le trait, joue, note le coup, passe la main à l'adversaire."""
-        raise NotImplementedError("à compléter")
+        piece = self.plateau[depart]
+
+        if piece is not None and piece.couleur != self.trait:
+            raise CoupInvalideError(
+                depart,
+                arrivee,
+                f"c'est aux {self.trait}s de jouer"
+                if self.trait == "blanc"
+                else "c'est aux noirs de jouer",
+            )
+
+        couleur = self.trait
+        prise = self.plateau.deplacer(depart, arrivee)
+
+        coup = Coup(
+            numero=len(self.historique) + 1,
+            couleur=couleur,
+            depart=str(en_case(depart)),
+            arrivee=str(en_case(arrivee)),
+            prise=prise is not None,
+        )
+
+        self.historique.append(coup)
+        self.trait = adversaire(self.trait)
+
+        return coup
 
     @property
     def gagnant(self) -> "str | None":
-        """Celui qui a le trait et ne peut plus jouer a perdu : la couleur gagnante, ou None."""
-        raise NotImplementedError("à compléter")
+        if self.plateau.coups_possibles(self.trait):
+            return None
+        return adversaire(self.trait)
 
     # --- Étape 8
     def sauvegarder(self, chemin) -> None:
