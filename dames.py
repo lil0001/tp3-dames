@@ -257,7 +257,47 @@ class Pion(Piece):
         return self
 
 # --- Étape 5 : la dame ---------------------------------------------------------------------------
-# À vous : écrivez ici la classe Dame (énoncé, étape 5).
+class Dame(Piece):
+    LETTRE = "D"
+    NOM = "dame"
+    FEMININ = True
+
+    def deplacements(self, case: Case, plateau: "Plateau") -> set[Case]:
+        resultat = set()
+
+        for dc, dl in DIAGONALES:
+            destination = case.decaler(dc, dl)
+
+            while destination is not None and plateau[destination] is None:
+                resultat.add(destination)
+                destination = destination.decaler(dc, dl)
+
+        return resultat
+
+    def prises(self, case: Case, plateau: "Plateau") -> dict[Case, Case]:
+        resultat = {}
+
+        for dc, dl in DIAGONALES:
+            destination = case.decaler(dc, dl)
+
+            while destination is not None and plateau[destination] is None:
+                destination = destination.decaler(dc, dl)
+
+            if destination is None:
+                continue
+
+            piece = plateau[destination]
+
+            if not self.est_adverse(piece):
+                continue
+
+            arrivee = destination.decaler(dc, dl)
+
+            while arrivee is not None and plateau[arrivee] is None:
+                resultat[arrivee] = destination
+                arrivee = arrivee.decaler(dc, dl)
+
+        return resultat
 
 
 # --- Étape 7 : la partie -------------------------------------------------------------------------
