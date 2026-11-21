@@ -57,7 +57,14 @@ class Case:
     def __str__(self) -> str:
         return f"{self.colonne}{self.ligne}"
 
+def en_case(case: Case | str) -> Case:
+    if isinstance(case, Case):
+        return case
+    return Case.depuis_nom(case)
 
+
+def ordre(case: Case) -> tuple:
+    return (case.ligne, COLONNES.index(case.colonne))
 # --- Étape 2 : les pièces ------------------------------------------------------------------------
 
 class Piece(ABC):
@@ -129,24 +136,40 @@ class Plateau:
 
     @classmethod
     def position_initiale(cls) -> "Plateau":
-        """Un pion sur chaque case noire : blancs en lignes 1 à 4, noirs en lignes 7 à 10."""
-        raise NotImplementedError("à compléter")
+        plateau = cls()
+
+        for ligne in range(1, 5):
+            for colonne in COLONNES:
+                case = Case(colonne, ligne)
+                if case.est_noire:
+                    plateau.placer(case, Pion("blanc"))
+
+        for ligne in range(7, 11):
+            for colonne in COLONNES:
+                case = Case(colonne, ligne)
+                if case.est_noire:
+                    plateau.placer(case, Pion("noir"))
+
+        return plateau
 
     def placer(self, case: "Case | str", piece: Piece) -> None:
-        """Pose une pièce. ValueError si la case est blanche ou déjà occupée."""
-        raise NotImplementedError("à compléter")
+        case = en_case(case)
 
+        if not case.est_noire:
+            raise ValueError("impossible de placer une pièce sur une case blanche")
+
+        if case in self._pieces:
+            raise ValueError(f"case déjà occupée : {case}")
+
+        self._pieces[case] = piece
     def __getitem__(self, case: "Case | str") -> "Piece | None":
-        """plateau["c3"] : la pièce sur la case, ou None si elle est vide."""
-        raise NotImplementedError("à compléter")
+        return self._pieces.get(en_case(case))
 
     def __contains__(self, case: "Case | str") -> bool:
-        """"c3" in plateau : vrai si la case est occupée."""
-        raise NotImplementedError("à compléter")
+        return en_case(case) in self._pieces
 
     def __len__(self) -> int:
-        """Le nombre de pièces sur le plateau."""
-        raise NotImplementedError("à compléter")
+        return len(self._pieces)
 
     def __iter__(self):
         """Parcourt les cases occupées, ligne par ligne, de gauche à droite."""
