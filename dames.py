@@ -59,55 +59,54 @@ class Case:
 
 
 # --- Étape 2 : les pièces ------------------------------------------------------------------------
-class Piece(ABC):
-    """Une pièce : une couleur qui ne change jamais. Elle ne connaît pas sa case :
-    c'est le plateau qui sait où sont les pièces."""
 
+class Piece(ABC):
     COULEURS = ("blanc", "noir")
-    LETTRE = "?"          # redéfinis par chaque sous-classe
+    LETTRE = "?"
     NOM = "pièce"
     FEMININ = False
 
     def __init__(self, couleur: str):
-        """Refuse une couleur autre que "blanc" ou "noir" (ValueError)."""
-        raise NotImplementedError("à compléter")
+        if couleur not in self.COULEURS:
+            raise ValueError(f"couleur invalide : {couleur!r}")
+        self._couleur = couleur
 
     @property
     def couleur(self) -> str:
-        """Lecture seule : pas de setter."""
-        raise NotImplementedError("à compléter")
+        return self._couleur
 
     @property
     def sens(self) -> int:
-        """Le sens de la marche : +1 (vers la ligne 10) pour les blancs, -1 pour les noirs."""
-        raise NotImplementedError("à compléter")
+        return 1 if self.couleur == "blanc" else -1
 
     @property
     def symbole(self) -> str:
-        """La lettre en majuscule pour les blancs, en minuscule pour les noirs."""
-        raise NotImplementedError("à compléter")
+        return self.LETTRE.upper() if self.couleur == "blanc" else self.LETTRE.lower()
 
     def est_adverse(self, autre: "Piece | None") -> bool:
-        """Vrai si autre est une pièce de l'autre couleur (faux pour None)."""
-        raise NotImplementedError("à compléter")
+        return autre is not None and self.couleur != autre.couleur
 
     @abstractmethod
     def deplacements(self, case: Case, plateau: "Plateau") -> set[Case]:
-        """Les cases où la pièce peut aller depuis case, sans prendre."""
+        pass
 
     @abstractmethod
     def prises(self, case: Case, plateau: "Plateau") -> dict[Case, Case]:
-        """Les prises possibles depuis case : {case d'arrivée: case de la pièce prise}."""
+        pass
 
     def promouvoir(self, case: Case) -> "Piece":
-        """La pièce qui occupe case après le coup. Par défaut, la pièce reste la même."""
         return self
 
     def __repr__(self) -> str:
-        raise NotImplementedError("à compléter")
+        return f"{type(self).__name__}({self.couleur!r})"
 
     def __str__(self) -> str:
-        raise NotImplementedError("à compléter")
+        if self.FEMININ:
+            adjectif = "blanche" if self.couleur == "blanc" else "noire"
+        else:
+            adjectif = self.couleur
+
+        return f"{self.NOM} {adjectif}"
 
 
 # --- Étape 3 : le plateau ------------------------------------------------------------------------
