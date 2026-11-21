@@ -179,18 +179,78 @@ class Plateau:
         return sum(1 for case in self if self[case].couleur == couleur)
 
     # --- Étape 6
+
     def prises_possibles(self, couleur: str) -> dict[Case, dict[Case, Case]]:
-        """Toutes les prises d'un joueur : {départ: {arrivée: pièce prise}}, seulement pour les
-        pièces qui peuvent prendre."""
-        raise NotImplementedError("à compléter")
+        resultat = {}
+
+        for case in self:
+            piece = self[case]
+
+            if piece.couleur == couleur:
+                prises = piece.prises(case, self)
+                if prises:
+                    resultat[case] = prises
+
+        return resultat
+
 
     def coups_possibles(self, couleur: str) -> list[tuple[Case, Case]]:
-        """Les coups autorisés, triés. S'il existe des prises, seules les prises comptent."""
-        raise NotImplementedError("à compléter")
+        prises = self.prises_possibles(couleur)
+
+        if prises:
+            coups = [
+                (depart, arrivee)
+                for depart, destinations in prises.items()
+                for arrivee in destinations
+            ]
+        else:
+            coups = [
+                (depart, arrivee)
+                for depart in self
+                for piece in [self[depart]]
+                if piece.couleur == couleur
+                for arrivee in piece.deplacements(depart, self)
+            ]
+
+        return sorted(coups, key=lambda coup: (ordre(coup[0]), ordre(coup[1])))
+
+
 
     def deplacer(self, depart: "Case | str", arrivee: "Case | str") -> "Piece | None":
-        """Joue un coup, renvoie la pièce prise ou None. Vérifier d'abord, modifier ensuite."""
-        raise NotImplementedError("à compléter")
+        depart = en_case(depart)
+        arrivee = en_case(arrivee)
+
+        piece = self[depart]
+
+        if piece is None:
+            raise CoupInvalideError(
+                depart, arrivee, "aucune pièce sur la case de départ"
+            )
+
+        prises = self.prises_possibles(piece.couleur)
+
+        if prises and depart not in prises:
+            raise CoupInvalideError(
+                depart, arrivee, "la prise est obligatoire"
+            )
+
+        coups = self.coups_possibles(piece.couleur)
+
+        if (depart, arrivee) not in coups:
+            raison = "la prise est obligatoire" if prises else "déplacement interdit"
+            raise CoupInvalideError(depart, arrivee, raison)
+
+        case_prise = piece.prises(depart, self).get(arrivee)
+        piece_prise = None
+
+        del self._pieces[depart]
+
+        if case_prise is not None:
+            piece_prise = self._pieces.pop(case_prise)
+
+        self._pieces[arrivee] = piece.promouvoir(arrivee)
+
+        return piece_prise
 
     # --- Étape 8
     def vers_dict(self) -> dict[str, str]:
