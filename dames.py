@@ -218,20 +218,43 @@ class Plateau:
 class Pion(Piece):
     LETTRE = "P"
     NOM = "pion"
+    FEMININ = False
 
-    def deplacements(self, case, plateau):
-        """Une case en diagonale, vers l'avant, si elle est libre."""
-        raise NotImplementedError("à compléter")
+    def deplacements(self, case: Case, plateau: "Plateau") -> set[Case]:
+        resultat = set()
 
-    def prises(self, case, plateau):
-        """Sauter une pièce adverse voisine (avant ou arrière) vers la case libre derrière."""
-        raise NotImplementedError("à compléter")
+        for dc in (-1, 1):
+            destination = case.decaler(dc, self.sens)
+            if destination is not None and plateau[destination] is None:
+                resultat.add(destination)
 
-    # --- Étape 6
-    def promouvoir(self, case):
-        """Sur la dernière ligne (10 pour les blancs, 1 pour les noirs), le pion devient dame."""
-        raise NotImplementedError("à compléter")
+        return resultat
 
+    def prises(self, case: Case, plateau: "Plateau") -> dict[Case, Case]:
+        resultat = {}
+
+        for dc in (-1, 1):
+            for dl in (-1, 1):
+                milieu = case.decaler(dc, dl)
+                destination = case.decaler(2 * dc, 2 * dl)
+
+                if milieu is None or destination is None:
+                    continue
+
+                piece = plateau[milieu]
+
+                if self.est_adverse(piece) and plateau[destination] is None:
+                    resultat[destination] = milieu
+
+        return resultat
+
+    def promouvoir(self, case: Case) -> Piece:
+        if (self.couleur == "blanc" and case.ligne == 10) or (
+            self.couleur == "noir" and case.ligne == 1
+        ):
+            return Dame(self.couleur)
+
+        return self
 
 # --- Étape 5 : la dame ---------------------------------------------------------------------------
 # À vous : écrivez ici la classe Dame (énoncé, étape 5).
